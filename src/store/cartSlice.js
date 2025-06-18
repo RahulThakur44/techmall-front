@@ -96,4 +96,5 @@ export const {
   updateQuantity,
 } = cartSlice.actions;
 
-export default cartSlice.reducer; 
+export default cartSlice.reducer;
+ 

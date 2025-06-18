@@ -1,177 +1,122 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+// src/pages/ProductDetails.jsx
+import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Container,
-  Grid,
-  Typography,
-  Button,
-  Rating,
-  TextField,
-  Paper,
-  Divider,
-  Chip,
-  CircularProgress,
-  Alert,
+  Container, Typography, Grid, Button, CircularProgress, Alert, Box, Snackbar
 } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { addToCart } from '../store/cartSlice';
-import { fetchProductById } from '../store/productSlice';
 
-function ProductDetails() {
+const ProductDetails = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [quantity, setQuantity] = useState(1);
-  const [error, setError] = useState(null);
-  const { selectedProduct: product, loading } = useSelector((state) => state.products);
-  const { isAuthenticated } = useSelector((state) => state.auth);
+
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
-    dispatch(fetchProductById(id));
-  }, [dispatch, id]);
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`http://localhost:5000/api/products/${id}`);
+        if (!res.ok) throw new Error('Product not found');
+        const data = await res.json();
+        setProduct(data);
+        setError('');
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
 
   const handleAddToCart = () => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
+    if (!product) return;
 
-    if (quantity < 1) {
-      setError('Please select a valid quantity');
-      return;
-    }
+    const image = product.image.startsWith('http')
+      ? product.image
+      : `http://localhost:5000/uploads/${product.image}`;
 
-    if (!product.in_stock) {
-      setError('Product is out of stock');
-      return;
-    }
+    dispatch(addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image,
+    }));
 
-    dispatch(addToCart({ ...product, quantity }));
-    setError(null);
+    setNotification({
+      open: true,
+      message: `${product.name} added to cart`,
+      severity: 'success',
+    });
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const handleAddToWishlist = () => {
+    const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+    const alreadyAdded = wishlist.find((item) => item.id === product.id);
 
-  if (!product) {
-    return (
-      <Container>
-        <Alert severity="error">Product not found</Alert>
-      </Container>
-    );
-  }
+    if (!alreadyAdded) {
+      wishlist.push(product);
+      localStorage.setItem('wishlist', JSON.stringify(wishlist));
+      setNotification({
+        open: true,
+        message: `${product.name} added to wishlist`,
+        severity: 'success',
+      });
+    } else {
+      setNotification({
+        open: true,
+        message: `${product.name} already in wishlist`,
+        severity: 'info',
+      });
+    }
+  };
+
+  const handleCloseNotification = () => {
+    setNotification({ ...notification, open: false });
+  };
+
+  if (loading) return <Container><CircularProgress /></Container>;
+  if (error) return <Container><Alert severity="error">{error}</Alert></Container>;
 
   return (
-    <Container sx={{ py: 4 }}>
+    <Container sx={{ py: 5 }}>
       <Grid container spacing={4}>
         <Grid item xs={12} md={6}>
-          <Paper
-            sx={{
-              p: 2,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
-            <img
-              src={product.image_url}
-              alt={product.name}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '500px',
-                objectFit: 'contain',
-              }}
-            />
-          </Paper>
+          <img
+            src={
+              product.image.startsWith('http')
+                ? product.image
+                : `http://localhost:5000/uploads/${product.image}`
+            }
+            alt={product.name}
+            style={{ width: '100%', borderRadius: '10px' }}
+          />
         </Grid>
+
         <Grid item xs={12} md={6}>
-          <Box>
-            <Typography variant="h4" gutterBottom>
-              {product.name}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Rating value={product.rating} readOnly />
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                ({product.rating})
-              </Typography>
-            </Box>
-            <Typography variant="body1" paragraph>
-              {product.description}
-            </Typography>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="h5" color="primary" gutterBottom>
-                ${product.price}
-              </Typography>
-              {product.original_price && (
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  sx={{ textDecoration: 'line-through' }}
-                >
-                  Original Price: ${product.original_price}
-                </Typography>
-              )}
-            </Box>
-            <Box sx={{ mb: 2 }}>
-              <Chip
-                label={product.category}
-                color="primary"
-                variant="outlined"
-                sx={{ mr: 1 }}
-              />
-              {product.in_stock ? (
-                <Chip label="In Stock" color="success" />
-              ) : (
-                <Chip label="Out of Stock" color="error" />
-              )}
-            </Box>
-            <Divider sx={{ my: 2 }} />
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Quantity
-              </Typography>
-              <TextField
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                inputProps={{ min: 1 }}
-                sx={{ width: '100px' }}
-              />
-            </Box>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              fullWidth
-              onClick={handleAddToCart}
-              disabled={!product.in_stock}
-            >
-              Add to Cart
-            </Button>
+          <Typography variant="h4" gutterBottom>{product.name}</Typography>
+          <Typography variant="h6" color="primary" gutterBottom>₹{product.price}</Typography>
+          <Typography variant="body1" color="text.secondary" gutterBottom>{product.description}</Typography>
+          <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+            <Button variant="contained" onClick={handleAddToCart}>Add to Cart</Button>
+            <Button variant="outlined" onClick={handleAddToWishlist}>Add to Wishlist</Button>
           </Box>
         </Grid>
       </Grid>
+
+      <Snackbar open={notification.open} autoHideDuration={3000} onClose={handleCloseNotification}>
+        <Alert onClose={handleCloseNotification} severity={notification.severity}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
-}
+};
 
-export default ProductDetails; 
+export default ProductDetails;

@@ -23,17 +23,22 @@ const categories = [
 ];
 
 const ProductFilters = ({ filters, onFilterChange }) => {
+  const search = filters?.search ?? '';
+  const category = filters?.category ?? 'all';
+  const priceRange = filters?.price ?? [0, 2000];
+
   const handleCategoryChange = (event) => {
+    const selected = event.target.value;
     onFilterChange({
       ...filters,
-      category: event.target.value === 'All' ? '' : event.target.value.toLowerCase()
+      category: selected
     });
   };
 
   const handlePriceChange = (event, newValue) => {
     onFilterChange({
       ...filters,
-      priceRange: newValue
+      price: newValue
     });
   };
 
@@ -46,6 +51,7 @@ const ProductFilters = ({ filters, onFilterChange }) => {
 
   return (
     <Box sx={{ p: 2 }}>
+      {/* 🔍 Search */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle1" gutterBottom>
           Search
@@ -54,7 +60,7 @@ const ProductFilters = ({ filters, onFilterChange }) => {
           fullWidth
           size="small"
           placeholder="Search products..."
-          value={filters.search}
+          value={search}
           onChange={handleSearchChange}
           InputProps={{
             startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />
@@ -64,6 +70,7 @@ const ProductFilters = ({ filters, onFilterChange }) => {
 
       <Divider sx={{ my: 2 }} />
 
+      {/* 🧩 Category */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle1" gutterBottom>
           Category
@@ -71,13 +78,13 @@ const ProductFilters = ({ filters, onFilterChange }) => {
         <FormControl fullWidth size="small">
           <InputLabel>Category</InputLabel>
           <Select
-            value={filters.category ? filters.category.charAt(0).toUpperCase() + filters.category.slice(1) : 'All'}
+            value={category}
             label="Category"
             onChange={handleCategoryChange}
           >
-            {categories.map((category) => (
-              <MenuItem key={category} value={category}>
-                {category}
+            {categories.map((cat) => (
+              <MenuItem key={cat} value={cat.toLowerCase()}>
+                {cat}
               </MenuItem>
             ))}
           </Select>
@@ -86,29 +93,30 @@ const ProductFilters = ({ filters, onFilterChange }) => {
 
       <Divider sx={{ my: 2 }} />
 
+      {/* 💰 Price Range */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle1" gutterBottom>
           Price Range
         </Typography>
         <Slider
-          value={filters.priceRange}
+          value={priceRange}
           onChange={handlePriceChange}
           valueLabelDisplay="auto"
           min={0}
           max={2000}
           step={50}
           marks={[
-            { value: 0, label: '$0' },
-            { value: 1000, label: '$1000' },
-            { value: 2000, label: '$2000' }
+            { value: 0, label: '₹0' },
+            { value: 1000, label: '₹1000' },
+            { value: 2000, label: '₹2000' }
           ]}
         />
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            ${filters.priceRange[0]}
+            ₹{priceRange[0]}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            ${filters.priceRange[1]}
+            ₹{priceRange[1]}
           </Typography>
         </Box>
       </Box>
@@ -116,4 +124,4 @@ const ProductFilters = ({ filters, onFilterChange }) => {
   );
 };
 
-export default ProductFilters; 
+export default ProductFilters;

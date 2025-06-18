@@ -36,3 +36,6 @@
     transform: rotate(360deg);
   }
 }
+/* Add this at the top of your global CSS */
+@import "~slick-carousel/slick/slick.css";
+@import "~slick-carousel/slick/slick-theme.css";

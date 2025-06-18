@@ -2,6 +2,9 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
 import cartReducer from './cartSlice';
 import productReducer from './productSlice';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
+
 
 const store = configureStore({
   reducer: {
@@ -23,3 +26,17 @@ const store = configureStore({
 });
 
 export default store; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+

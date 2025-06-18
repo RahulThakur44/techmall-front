@@ -372,7 +372,7 @@ const Home = () => {
                       <Button
                         variant="contained"
                         startIcon={<ShoppingCartIcon />}
-                        onClick={() => navigate(`/products/${product.id}`)}
+                        onClick={() => navigate(`/product/${product.id}`)}
                         disabled={!product.inStock}
                         sx={{
                           backgroundColor: product.inStock ? theme.palette.primary.main : theme.palette.grey[400],

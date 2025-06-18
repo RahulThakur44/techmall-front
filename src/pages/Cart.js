@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
-  Grid,
   Card,
   CardContent,
   CardMedia,
@@ -13,17 +12,28 @@ import {
   IconButton,
   TextField,
   Divider,
+  Grid,
 } from '@mui/material';
-import { removeFromCart, deleteFromCart, updateQuantity } from '../store/cartSlice';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import { removeFromCart, updateQuantity } from '../store/cartSlice';
+import { useMemo } from 'react';
 
 const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const cart = useSelector((state) => state.cart);
-  const items = cart?.items || [];
+  //const items = cart?.items || [];
+  const items = useMemo(() => {
+  return cart.items && cart.items.length > 0 ? cart.items : [];
+}, [cart.items]);
+
+
+  useEffect(() => {
+    console.log('Cart Items:', items);
+  }, [items]);
+
 
   const handleQuantityChange = (itemId, newQuantity) => {
     if (newQuantity > 0) {
@@ -35,9 +45,17 @@ const Cart = () => {
     dispatch(removeFromCart(itemId));
   };
 
-  const calculateTotal = () => {
-    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+  const calculateSubtotal = () => {
+    return items.reduce((total, item) => {
+      const price = Number(item.price);
+      const qty = Number(item.quantity);
+      return total + price * qty;
+    }, 0);
   };
+
+  const subtotal = calculateSubtotal();
+  const taxAmount = subtotal * 0.1;
+  const totalAmount = subtotal + taxAmount;
 
   if (items.length === 0) {
     return (
@@ -67,7 +85,9 @@ const Cart = () => {
       <Typography variant="h4" gutterBottom>
         Shopping Cart
       </Typography>
+
       <Grid container spacing={4}>
+        {/* Left: Cart Items */}
         <Grid item xs={12} md={8}>
           {items.map((item) => (
             <Card key={item.id} sx={{ mb: 2 }}>
@@ -83,11 +103,9 @@ const Cart = () => {
                     />
                   </Grid>
                   <Grid item xs={12} sm={4}>
-                    <Typography variant="h6" gutterBottom>
-                      {item.name}
-                    </Typography>
+                    <Typography variant="h6">{item.name}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      ${item.price}
+                      ₹{Number(item.price).toFixed(2)}
                     </Typography>
                   </Grid>
                   <Grid item xs={12} sm={3}>
@@ -100,7 +118,9 @@ const Cart = () => {
                       </IconButton>
                       <TextField
                         value={item.quantity}
-                        onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 0)}
+                        onChange={(e) =>
+                          handleQuantityChange(item.id, parseInt(e.target.value) || 1)
+                        }
                         type="number"
                         size="small"
                         sx={{ width: '60px', mx: 1 }}
@@ -117,7 +137,7 @@ const Cart = () => {
                   <Grid item xs={12} sm={2}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                       <Typography variant="subtitle1" color="primary">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ₹{(Number(item.price) * Number(item.quantity)).toFixed(2)}
                       </Typography>
                       <IconButton
                         color="error"
@@ -133,6 +153,8 @@ const Cart = () => {
             </Card>
           ))}
         </Grid>
+
+        {/* Right: Order Summary */}
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
@@ -142,21 +164,21 @@ const Cart = () => {
               <Box sx={{ my: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography>Subtotal</Typography>
-                  <Typography>${calculateTotal().toFixed(2)}</Typography>
+                  <Typography>₹{subtotal.toFixed(2)}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography>Shipping</Typography>
                   <Typography>Free</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography>Tax</Typography>
-                  <Typography>${(calculateTotal() * 0.1).toFixed(2)}</Typography>
+                  <Typography>Tax (10%)</Typography>
+                  <Typography>₹{taxAmount.toFixed(2)}</Typography>
                 </Box>
                 <Divider sx={{ my: 2 }} />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                   <Typography variant="h6">Total</Typography>
                   <Typography variant="h6" color="primary">
-                    ${(calculateTotal() * 1.1).toFixed(2)}
+                    ₹{totalAmount.toFixed(2)}
                   </Typography>
                 </Box>
                 <Button
@@ -176,4 +198,4 @@ const Cart = () => {
   );
 };
 
-export default Cart; 
+export default Cart;
